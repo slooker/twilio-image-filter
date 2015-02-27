@@ -12,14 +12,6 @@ var download = function(uri, filename, callback){
   });
 };
 
-// List of valid filters
-var filters = {
-  'grayScale' : 1,
-  'threshold' : 1,
-};
-console.log(filters);
-
-
 // Load filters
 var filter = require('./lib/filters.js');
 
@@ -53,7 +45,6 @@ function applyFilter(filterName, fileName, callback) {
           console.log(err);
         } else {
           console.log('success');
-          console.log(filteredFileName);
           callback(filteredFileName);
         }
       });
@@ -109,7 +100,6 @@ server.route({
     imageData = filter.grayScale(imageData);
 
     var jpegImageData = jpeg.encode(imageData, 90);
-    console.log(jpegImageData);
     fs.writeFile('images/fry-grey.jpg', jpegImageData.data, function(err) {
       if (err) {
         console.log(err);
