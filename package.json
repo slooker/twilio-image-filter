@@ -1,0 +1,23 @@
+{
+  "name": "twilio-filtered-images",
+  "version": "1.0.0",
+  "description": "Filter images through Twilio",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/slooker/twilio-image-filter.git"
+  },
+  "dependencies": {
+    "hapi": ">= 8.1",
+    "jpeg-js": ">= 0.1.1",
+    "node-uuid": ">= 1.4.2",
+    "request": ">= 2.53.0",
+    "twilio": ">= 1.11.1"
+  },
+  "author": "Shawn Looker",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/slooker/twilio-image-filter/issues"
+  },
+  "homepage": "https://github.com/slooker/twilio-image-filter"
+}
