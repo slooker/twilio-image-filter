@@ -4,13 +4,23 @@ var http = require('https');
 var uuid = require('node-uuid');
 var request = require('request');
 var jpeg = require('jpeg-js');
+var png = require('png-js');
+var fileType = require('file-type');
+var sizeOf = require('image-size');
 
 // This is our helper to download media files from Twilio when we receive them.
 var download = function(uri, filename, callback){
   request.head(uri, function(err, res, body){
+    if (err) { callback(err); }
     request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
   });
 };
+
+function writeFile(fileName, data, callback) {
+  fs.writeFile(fileName, data, function(err) {
+    if (err) { callback(err); } 
+  });
+}
 
 // Load filters
 var filter = require('./lib/filters.js');
@@ -28,29 +38,47 @@ server.connection({ port: 8088 });
 // This includes decoding the jpeg, applying the filter 
 // then re-encoding it back into a jpeg format and writing it to the filesystem.
 function applyFilter(filterName, fileName, callback) {
-      // Decode jpeg data
-      var jpegData = fs.readFileSync(fileName);
-      var imageData = jpeg.decode(jpegData);
-      var filteredFileName = fileName.replace('.jpg','-'+filterName+'.jpg');
+  decodeImage(fileName, function(imageData) {
+    if (filterName == 'grayScale') {
+      imageData.data = filter.grayScale(imageData.data);
+    } else if (filterName == 'threshold') {
+      imageData.data = filter.threshold(imageData.data, 128);
+    } 
+    var filteredFileName = fileName.replace(/\.\d{3}/,"-"+filterName+".jpg");
 
-      if (filterName == 'grayScale') {
-        imageData = filter.grayScale(imageData);
-      } else if (filterName == 'threshold') {
-        imageData = filter.threshold(imageData, 128);
-      } 
-
-      var jpegImageData = jpeg.encode(imageData, 90);
-      fs.writeFile(filteredFileName, jpegImageData.data, function(err) {
-        if (err) {
-          console.log(err);
-        } else {
-          console.log('success');
-          callback(filteredFileName);
-        }
-      });
-
-
+    var jpegImageData = jpeg.encode(imageData, 90);
+    fs.writeFile(filteredFileName, jpegImageData.data, function(err) {
+      if (err) { callback(err); } 
+      callback(filteredFileName);
+    });
+  });
 }
+
+function decodeImage(fileName, callback) {
+  // Read file
+  var fileData = fs.readFileSync(fileName);
+  // Get file type
+  var metaData = fileType(fileData);
+  var imageData;
+
+  if (metaData.ext == 'jpg') {
+    imageData = jpeg.decode(fileData);
+    callback(imageData);
+  } else if (metaData.ext == 'png') {
+    png.decode(fileName, function(pixels) {
+      var size = sizeOf(fileName);
+      // Convert to jpeg.  Writing back out to png was a pain.
+      imageData = {
+        data: pixels,
+        width: size.width,
+        height: size.height
+      };
+      callback(imageData);
+    });
+  }
+}
+
+
 
 
 server.route({
@@ -83,7 +111,8 @@ server.route({
 
 function createMessage(twilioMessage) {
   client.messages.create(twilioMessage, function(err, twilio) {
-    console.log(twilio.sid);
+    if (err) { console.log(err); }
+    else { console.log(twilio.sid); }
   });
 }
 
@@ -92,32 +121,35 @@ server.route({
   method: 'GET',
   path: '/test',
   handler: function(request, reply) {
-    var fileName = 'images/test.jpg';
-
-    // Decode jpeg data
-    var jpegData = fs.readFileSync(fileName);
-    var imageData = jpeg.decode(jpegData);
-    imageData = filter.grayScale(imageData);
-
-    var jpegImageData = jpeg.encode(imageData, 90);
-    fs.writeFile('images/fry-grey.jpg', jpegImageData.data, function(err) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log('success');
-      }
+    var fileName = 'images/test.png';
+    decodeImage(fileName, function(imageData) {
+      var filterName = 'grayScale';
+      if (filterName == 'grayScale') {
+        imageData.data = filter.grayScale(imageData.data);
+      } else if (filterName == 'threshold') {
+        imageData.data = filter.threshold(imageData.data, 128);
+      } 
+      var filteredFileName = fileName.replace(/\.\w{3}/,"-"+filterName+".jpg");
+  
+      var jpegImageData = jpeg.encode(imageData, 90);
+      fs.writeFile(filteredFileName, jpegImageData.data, function(err) {
+        if (err) { callback(err); } 
+        else { console.log("success"); }
+      });
     });
+
     reply("done");
   }
 });
 
+
 // This lets us serve up our images
 server.route({ 
   method: 'GET',
-  path: '/images/{file}.jpg',
+  path: '/images/{file}.{ext}',
   handler: function(request, reply) {
-    reply.file('images/'+request.params.file+'.jpg');
-
+    if (request.params.ext == 'jpg' || request.params.ext == 'png') 
+      reply.file('images/'+request.params.file+'.'+request.params.ext);
   }
 });
 
