@@ -26,9 +26,13 @@ function writeFile(fileName, data, callback) {
 var filter = require('./lib/filters.js');
 
 // Load our environment variables to setup our twilio client
+/*
 var accountSid = process.env.twilioSid;
 var authToken = process.env.twilioAuthToken;
 var client = require('twilio')(accountSid, authToken);
+*/
+// Exported in TWILIO_AUTH_TOKEN and TWILIO_ACCOUNT_SID
+var client = require('twilio');
 
 // Setup our hapi server
 var server = new Hapi.Server();
