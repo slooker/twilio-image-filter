@@ -8,14 +8,20 @@
     "url": "git://github.com/slooker/twilio-image-filter.git"
   },
   "dependencies": {
-    "hapi": ">= 8.1",
-    "jpeg-js": ">= 0.1.1",
-    "node-uuid": ">= 1.4.2",
-    "request": ">= 2.53.0",
-    "twilio": ">= 1.11.1",
-    "png-js": ">= 0.1.1",
-    "file-type": ">= 2.2.0",
-    "image-size": ">= 0.3.5"
+    "file-type": "^3.8.0",
+    "hapi": "^14.2.0",
+    "image-size": "^0.5.0",
+    "inert": "^4.0.1",
+    "jpeg-js": "^0.2.0",
+    "node-uuid": "^1.4.7",
+    "png-js": "^0.1.1",
+    "request": "^2.74.0",
+    "require": "^2.4.20",
+    "twilio": "^2.9.2"
+  },
+  "scripts": {
+    "start": "node twilio-images.js",
+    "debug": "nodemon twilio-images.js"
   },
   "author": "Shawn Looker",
   "license": "Apache 2.0",
